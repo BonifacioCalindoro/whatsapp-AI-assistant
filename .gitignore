@@ -1,0 +1,7 @@
+.venv/
+.env
+thought_messages.pkl
+sendable_messages/
+conversations/
+__pycache__/
+tokens/
