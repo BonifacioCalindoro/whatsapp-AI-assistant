@@ -6,3 +6,5 @@ conversations/
 __pycache__/
 tokens/
 converted/
+audios/
+samples/

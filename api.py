@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-import uvicorn, pickle, os, logfire
+import uvicorn, pickle, os, logfire, json
 from openai import AsyncOpenAI
-from utils import convert_from_b64_and_transcribe
+from utils import convert_from_b64_and_transcribe, convert_opus_base64_to_mp3, clone_voice_from_samples, get_voices
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from dotenv import load_dotenv
 
@@ -24,6 +24,12 @@ app = FastAPI()
 if not os.path.exists('conversations'):
     os.makedirs('conversations')
 
+if not os.path.exists('samples'):
+    os.makedirs('samples')
+
+if not os.path.exists('audios'):
+    os.makedirs('audios')
+
 async def send_to_telegram(chat_id, message):
     keyboard = InlineKeyboardMarkup(
         [
@@ -32,6 +38,11 @@ async def send_to_telegram(chat_id, message):
     )
     await bot.send_message(os.getenv('TELEGRAM_CHAT_ID'), f'<b>{message["sender"]["shortName"]}</b>: <i>{message["content"]}</i>', parse_mode='HTML', reply_markup=keyboard)
 
+def load_samples():
+    samples = {}
+    for telephone in [telephone.replace('.pkl', '') for telephone in os.listdir('samples')]:
+        samples[telephone] = pickle.load(open(f'samples/{telephone}.pkl', 'rb'))
+    return samples
 
 def load_conversations():
     conversations = {}
@@ -43,6 +54,10 @@ def save_conversation(telephone, conversation):
     pickle.dump(conversation, open(f'conversations/{telephone}.pkl', 'wb'))
 
 conversations = load_conversations()
+samples = load_samples()
+
+def save_sample(telephone, sample):
+    pickle.dump(sample, open(f'samples/{telephone}.pkl', 'wb'))
 
 def format_conversation(conversation, from_message):
     formatted_conversation = []
@@ -73,10 +88,29 @@ async def complete(data: dict):
     else:
         response = await complete_conversation(chat_id, from_message=message_id)
         return {"message": response, "error": False}
+    
+@app.post('/clone')
+async def clone(data: dict):
+    global samples
+    telephone = data['telephone']
+    if telephone not in samples.keys():
+        return {"message": "Telephone not found", "error": True}
+    else:
+        try:
+            voice = clone_voice_from_samples(samples[telephone], data['prompt'], data['name'])
+            voices = get_voices()
+            return {"message": voice, "error": False, "voices": voices, "voice": voice}
+        except Exception as e:
+            return {"message": str(e), "error": True}
+
+@app.get('/voices')
+async def voices():
+    return {"voices": get_voices().model_dump()['voices'], "error": False}
 
 @app.post('/new_message')
 async def new_message(message: dict):
     global conversations
+    global samples
     chat_id = message["chatId"]["user"]
     if len(chat_id) > 14:
         return
@@ -89,8 +123,23 @@ async def new_message(message: dict):
     if message["sender"]["shortName"] in ["None", "none", "NONE", None]:
         return
     if message.get("base_64_audio") != None:
-        transcription = await convert_from_b64_and_transcribe(message["base_64_audio"])
+        from_telephone = message["from"].split("@")[0]
+        if from_telephone not in samples.keys():
+            samples[from_telephone] = []
+        output_file = convert_opus_base64_to_mp3(message["base_64_audio"], f"audios/{message['id'].split('_')[2]}.mp3")
+        samples[from_telephone].append(output_file)
+        save_sample(from_telephone, samples[from_telephone])
+        retries = 3
+        while retries > 0:
+            try:
+                transcription = await convert_from_b64_and_transcribe(message["base_64_audio"])
+                break
+            except:
+                retries -= 1
+        else:
+            return {"message": "Error transcribing audio", "error": True}
         message["content"] = transcription
+
     if message['fromMe']:
         conversations[chat_id].append({
             "from": message["from"].split("@")[0],

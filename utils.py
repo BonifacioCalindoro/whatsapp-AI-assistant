@@ -63,10 +63,10 @@ async def convert_from_b64_and_transcribe(base_64_audio: str) -> str:
         
         return response.json()["text"]
 
-async def text_to_speech(text: str, save: bool = False, save_path: str = None, to_base64: bool = False, to_ogg: bool = False):
+async def text_to_speech(text: str, save: bool = False, save_path: str = None, to_base64: bool = False, to_ogg: bool = False, voice_id: str = os.getenv('ELEVENLABS_VOICE_ID')):
     audio = elevenlabs_client.text_to_speech.convert(
         text=text,
-        voice_id=os.getenv('ELEVENLABS_VOICE_ID'),
+        voice_id=voice_id,
         model_id="eleven_multilingual_v2"
     )
     audio = b''.join([chunk for chunk in audio])
@@ -74,9 +74,44 @@ async def text_to_speech(text: str, save: bool = False, save_path: str = None, t
         f.write(audio)
     if to_ogg:
         audio, output_file = convert_mp3_to_opus_ffmpeg("audio.mp3")
+        os.remove("audio.mp3")
     if save:
         with open(save_path, "wb") as f:
             f.write(audio)
     if to_base64:
         return f'data:audio/ogg; codecs=opus;base64,{base64.b64encode(audio).decode('utf-8')}', output_file
     return audio, output_file
+
+def convert_opus_base64_to_mp3(base_64_audio: str, output_file: str):
+    audio_data = base64.b64decode(base_64_audio.split(',')[1])
+    mime_type = base_64_audio.split(',')[0].split(";")[0].split(":")[1]
+    file_extension = mimetypes.guess_extension(mime_type)
+    if not file_extension:
+        file_extension = f'.{mime_type.split("/")[1]}'
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+        temp_file.write(audio_data)
+        file_path = temp_file.name
+    
+    (
+        ffmpeg
+        .input(file_path)
+        .output(output_file, audio_bitrate="32k", format="mp3", acodec="libmp3lame")
+        .run(overwrite_output=True)
+    )
+
+    os.remove(file_path)
+    return output_file
+
+
+def clone_voice_from_samples(samples: list[str], prompt: str, name: str):
+    voice = elevenlabs_client.clone(
+        name=name,
+        description=prompt,
+        files=samples
+    )
+    return voice
+
+def get_voices():
+    voices = elevenlabs_client.voices.get_all()
+    return voices
