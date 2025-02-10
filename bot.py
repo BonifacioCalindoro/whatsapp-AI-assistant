@@ -68,7 +68,7 @@ async def set_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return ConversationHandler.END
         else:
             voices, voice = response['voices'], response['voice']
-            await update.effective_chat.send_message(f'Voice <code>{voice["voice_id"]}</code> cloned successfully!')
+            await update.effective_chat.send_message(f'Voice <code>{voice["voice_id"]}</code> cloned successfully!', parse_mode='HTML')
     return ConversationHandler.END
 
 async def get_voices(update: Update, context: ContextTypes.DEFAULT_TYPE):
