@@ -13,10 +13,13 @@ colorama==0.4.6
 cryptography==44.0.0
 Deprecated==1.2.18
 distro==1.9.0
+elevenlabs==1.50.7
 event-emitter-js==0.1.2
 executing==2.2.0
 fastapi==0.115.8
+ffmpeg-python==0.2.0
 frozenlist==1.5.0
+future==1.0.0
 google-auth==2.38.0
 google-auth-oauthlib==1.2.1
 googleapis-common-protos==1.66.0
@@ -71,6 +74,7 @@ tqdm==4.67.1
 typing_extensions==4.12.2
 urllib3==2.3.0
 uvicorn==0.34.0
+websockets==14.2
 WPP_Whatsapp @ git+https://github.com/3mora2/WPP_Whatsapp@e45161086704afc369e8d550105e1f598216b1eb
 wrapt==1.17.2
 yarl==1.18.3

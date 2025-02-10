@@ -1,13 +1,6 @@
 from WPP_Whatsapp import Create
-import os
-import asyncio
-import random
-import pickle
+import os, asyncio, random, pickle, logfire, requests
 from dotenv import load_dotenv
-import logfire
-import requests
-import json
-import os
 
 load_dotenv()
 

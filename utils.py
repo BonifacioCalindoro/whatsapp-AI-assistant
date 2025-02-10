@@ -66,7 +66,7 @@ async def convert_from_b64_and_transcribe(base_64_audio: str) -> str:
 async def text_to_speech(text: str, save: bool = False, save_path: str = None, to_base64: bool = False, to_ogg: bool = False):
     audio = elevenlabs_client.text_to_speech.convert(
         text=text,
-        voice_id="W5JElH3dK1UYYAiHH7uh",
+        voice_id=os.getenv('ELEVENLABS_VOICE_ID'),
         model_id="eleven_multilingual_v2"
     )
     audio = b''.join([chunk for chunk in audio])

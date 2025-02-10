@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-import uvicorn, pickle, os, json, logfire
+import uvicorn, pickle, os, logfire
 from openai import AsyncOpenAI
 from utils import convert_from_b64_and_transcribe
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
@@ -58,7 +58,7 @@ async def complete_conversation(chat_id, from_message):
     conversation = conversations[chat_id]
     formatted_conversation = format_conversation(conversation, from_message)
     response = await openai.chat.completions.create(
-        model="o1-preview",
+        model=os.getenv('OPENAI_MODEL'),
         messages=formatted_conversation
     )
     return response.choices[0].message.content

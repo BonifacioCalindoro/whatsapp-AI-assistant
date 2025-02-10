@@ -14,6 +14,9 @@ logging.basicConfig(
 
 load_dotenv()
 
+if not os.path.exists('sendable_messages'):
+    os.makedirs('sendable_messages')
+
 def load_thought_messages():
     if os.path.exists('thought_messages.pkl'):
         return pickle.load(open('thought_messages.pkl', 'rb'))
@@ -81,6 +84,7 @@ async def callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     application = Application.builder().token(os.getenv('TELEGRAM_BOT_TOKEN')).build()
     application.add_handler(CommandHandler('start', start, block=False))
+    application.add_handler(CommandHandler('chatid', chat_id, block=False))
     application.add_handler(CallbackQueryHandler(callback_query, block=False))
     application.run_polling()
 
