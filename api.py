@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-import uvicorn, pickle, os
-import logfire
+import uvicorn, pickle, os, json, logfire
 from openai import AsyncOpenAI
+from utils import convert_from_b64_and_transcribe
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from dotenv import load_dotenv
 
@@ -78,12 +78,19 @@ async def complete(data: dict):
 async def new_message(message: dict):
     global conversations
     chat_id = message["chatId"]["user"]
+    if len(chat_id) > 14:
+        return
     if chat_id not in conversations.keys():
         conversations[chat_id] = []
     try:
         int(message["from"].split("@")[0])
     except:
         return
+    if message["sender"]["shortName"] in ["None", "none", "NONE", None]:
+        return
+    if message.get("base_64_audio") != None:
+        transcription = await convert_from_b64_and_transcribe(message["base_64_audio"])
+        message["content"] = transcription
     if message['fromMe']:
         conversations[chat_id].append({
             "from": message["from"].split("@")[0],

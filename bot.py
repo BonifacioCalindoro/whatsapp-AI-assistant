@@ -1,12 +1,12 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from httpx import AsyncClient
 import os
 from dotenv import load_dotenv
 import logging
 import random
 import pickle
-
+from utils import text_to_speech
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -26,7 +26,6 @@ def save_thought_messages():
     pickle.dump(thought_messages, open('thought_messages.pkl', 'wb'))
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     await update.message.reply_text("Yes")
 
 
@@ -50,15 +49,32 @@ async def callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
             thought_messages[chat_id] = {}
         response_id = str(random.randint(0, 1000000))
         thought_messages[chat_id][response_id] = response
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Enviar', callback_data=f'send_{chat_id}_{response_id}')]])
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton('Enviar texto', callback_data=f'send_{chat_id}_{response_id}'),
+            InlineKeyboardButton('Enviar audio', callback_data=f'audio_{chat_id}_{response_id}')
+            ]
+            ])
         await message.edit_text(f'<code>{response}</code>', parse_mode='HTML', reply_markup=keyboard)
         save_thought_messages()
         
     elif s == 'send':
         pickle.dump({
+            'type': 'text',
             'telephone': chat_id,
             'message': thought_messages[chat_id][message_id],
             'filename': f'{chat_id}_{message_id}.pkl'
+        }, open(f'sendable_messages/{chat_id}_{message_id}.pkl', 'wb'))
+        await query.answer('Puesto en cola')
+    elif s == 'audio':
+        msg = await update.effective_message.reply_text('Generando audio...')
+        audio, output_file = await text_to_speech(thought_messages[chat_id][message_id], to_ogg=True, to_base64=True)
+        await msg.delete()
+        pickle.dump({
+            'type': 'audio',
+            'telephone': chat_id,
+            'message': audio,
+            'filename': f'{chat_id}_{message_id}.pkl',
+            'audio_filename': output_file
         }, open(f'sendable_messages/{chat_id}_{message_id}.pkl', 'wb'))
         await query.answer('Puesto en cola')
 

@@ -20,9 +20,11 @@ logfire.configure(
 async def check_sendable_messages():
     return [
         {
+            "type": message_data['type'],
             "telephone": message_data['telephone'] if message_data['telephone'].startswith('34') else f'34{message_data["telephone"]}',
             "message": message_data['message'],
-            "filename": message_data['filename']
+            "filename": message_data['filename'],
+            "audio_filename": message_data.get('audio_filename', None)
         }
         for message_data in [
             pickle.load(open(f'sendable_messages/{filename}', 'rb'))
@@ -42,21 +44,43 @@ async def sendable_message_checker():
         if sendable:
             with logfire.span(f'sending {len(sendable)} messages', messages=sendable, amount=len(sendable)):
                 for message in sendable:
-                    try:
-                        result = client.sendText(
-                            to=message['telephone'],
-                            content=message['message']
-                        )
-                        logfire.info(f'Sent message to {message["telephone"]}', result=result, _tags=['sent_message'])
-                    except Exception as e:
-                        logfire.error(f'Error sending message to {message["telephone"]}', _tags=['error_sending_message'])
-                        print(e)
-                        break
+                    if message['type'] == 'text':
+                        try:
+                            result = client.sendText(
+                                to=message['telephone'],
+                                content=message['message']
+                            )
+                            logfire.info(f'Sent message to {message["telephone"]}', result=result, _tags=['sent_message'])
+                        except Exception as e:
+                            logfire.error(f'Error sending message to {message["telephone"]}', _tags=['error_sending_message'])
+                            print(e)
+                            break
+                    elif message['type'] == 'audio':
+                        try:
+                            result = client.sendFile(
+                                to=message['telephone'],
+                                pathOrBase64=message['audio_filename'],
+                                nameOrOptions=message['audio_filename'].split('/')[-1],
+                                caption='audio'
+                            )
+                            logfire.info(f'Sent audio to {message["telephone"]}', result=result, _tags=['sent_audio'])
+                            os.remove(f'sendable_messages/{message["filename"]}')
+                            os.remove(message["audio_filename"])
+                        except Exception as e:
+                            logfire.error(f'Error sending audio to {message["telephone"]}', _tags=['error_sending_audio'])
+                            print(e)
+                            break
                     await asyncio.sleep(10+random.randint(1, 15))
-                    os.remove(f'sendable_messages/{message["filename"]}')
+                    try:
+                        os.remove(f'sendable_messages/{message["filename"]}')
+                    except Exception as e:
+                        print(e)
         await asyncio.sleep(2)
 
 def new_message_received(message):
+    if message.get('mimetype') != None and message.get('mimetype').startswith('audio'):
+        base_64_audio = client.downloadMedia(message['id'])
+        message["base_64_audio"] = base_64_audio
     requests.post('http://localhost:47549/new_message', json=message)
 
 def main():
