@@ -29,7 +29,7 @@ def save_thought_messages():
     pickle.dump(thought_messages, open('thought_messages.pkl', 'wb'))
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Yes")
+    await update.message.reply_text("Yes, I'm alive!")
 
 
 async def chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -40,21 +40,21 @@ async def callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     s, chat_id, message_id = query.data.split('_')
     if s == 'complete':
-        await query.answer('Completando...')
-        message = await update.effective_chat.send_message('<i>Completando...</i>', parse_mode='HTML')
+        await query.answer('Completing...')
+        message = await update.effective_chat.send_message('<i>Completing...</i>', parse_mode='HTML')
         async with AsyncClient(timeout=120) as client:
             response = await client.post('http://localhost:47549/complete', json={
                 'chatId': chat_id,
                 'messageId': message_id
             })
-        response = response.json()["message"].replace('Usuario 1: ', '').replace('Usuario 2: ', '')
+        response = response.json()["message"].replace('User 1: ', '').replace('User 2: ', '')
         if chat_id not in thought_messages.keys():
             thought_messages[chat_id] = {}
         response_id = str(random.randint(0, 1000000))
         thought_messages[chat_id][response_id] = response
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton('Enviar texto', callback_data=f'send_{chat_id}_{response_id}'),
-            InlineKeyboardButton('Enviar audio', callback_data=f'audio_{chat_id}_{response_id}')
+            [InlineKeyboardButton('Send text', callback_data=f'send_{chat_id}_{response_id}'),
+            InlineKeyboardButton('Send audio', callback_data=f'audio_{chat_id}_{response_id}')
             ]
             ])
         await message.edit_text(f'<code>{response}</code>', parse_mode='HTML', reply_markup=keyboard)
@@ -67,9 +67,9 @@ async def callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'message': thought_messages[chat_id][message_id],
             'filename': f'{chat_id}_{message_id}.pkl'
         }, open(f'sendable_messages/{chat_id}_{message_id}.pkl', 'wb'))
-        await query.answer('Puesto en cola')
+        await query.answer('Queued')
     elif s == 'audio':
-        msg = await update.effective_message.reply_text('Generando audio...')
+        msg = await update.effective_message.reply_text('Generating audio...')
         audio, output_file = await text_to_speech(thought_messages[chat_id][message_id], to_ogg=True, to_base64=True)
         await msg.delete()
         pickle.dump({
@@ -79,7 +79,7 @@ async def callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'filename': f'{chat_id}_{message_id}.pkl',
             'audio_filename': output_file
         }, open(f'sendable_messages/{chat_id}_{message_id}.pkl', 'wb'))
-        await query.answer('Puesto en cola')
+        await query.answer('Queued')
 
 def main():
     application = Application.builder().token(os.getenv('TELEGRAM_BOT_TOKEN')).build()

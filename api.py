@@ -46,9 +46,9 @@ conversations = load_conversations()
 
 def format_conversation(conversation, from_message):
     formatted_conversation = []
-    formatted_conversation.append({"role": "user", "content": "Eres un asistente personal que puede completar conversaciones en nombre de Usuario 1. Lee la conversación y responde como si fueras Usuario 1, respetando el tono de voz y el estilo de escritura de Usuario 1."})
+    formatted_conversation.append({"role": "user" if os.getenv('OPENAI_MODEL').startswith('o') else "system", "content": "You are a personal assistant that can complete conversations on behalf of User 1. Read the conversation and respond as if you were User 1, respecting the tone of voice and writing style of User 1."})
     for message in conversation:
-        formatted_conversation.append({"role": "assistant" if message["fromMe"] else "user", "content": f'Usuario 1: {message["content"]}' if message["fromMe"] else f'Usuario 2: {message["content"]}'})
+        formatted_conversation.append({"role": "assistant" if message["fromMe"] else "user", "content": f'User 1: {message["content"]}' if message["fromMe"] else f'User 2: {message["content"]}'})
         if message["messageId"] == from_message:
             break
     return formatted_conversation
