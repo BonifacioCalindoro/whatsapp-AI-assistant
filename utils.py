@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from elevenlabs.client import ElevenLabs
 import ffmpeg
 import datetime
-
+from elevenlabs.types import VoiceSettings
 load_dotenv()
 
 elevenlabs_client = ElevenLabs(
@@ -111,6 +111,22 @@ def clone_voice_from_samples(samples: list[str], prompt: str, name: str):
         files=samples
     )
     return voice
+
+def edit_voice(voice_id: str, files: list[str] = None, name: str = None, description: str = None, labels: str = None, remove_background_noise: bool = None):
+    return elevenlabs_client.voices.edit(
+        voice_id=voice_id,
+        files=files,
+        name=name,
+        description=description,
+        labels=labels,
+        remove_background_noise=remove_background_noise
+    )
+
+def edit_voice_settings(voice_id: str, request: VoiceSettings):
+    return elevenlabs_client.voices.edit_settings(
+        voice_id=voice_id,
+        request=request
+    )
 
 def get_voices():
     voices = elevenlabs_client.voices.get_all()

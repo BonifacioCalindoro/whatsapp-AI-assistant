@@ -2,11 +2,12 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 from httpx import AsyncClient
 import os
+from elevenlabs.types import VoiceSettings
 from dotenv import load_dotenv
 import logging
 import random
 import pickle
-from utils import text_to_speech
+from utils import text_to_speech, edit_voice_settings
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -96,6 +97,23 @@ async def set_voice_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.effective_chat.send_message(f'Voice ID not found')
 
+async def edit_voice_settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        voice_id, stability, similarity_boost, style, use_speaker_boost = context.args
+        stability = float(stability)
+        similarity_boost = float(similarity_boost)
+        style = float(style)
+    except:
+        await update.effective_chat.send_message(f'Usage: /editvoicesettings <voice_id> <stability> <similarity_boost> <style> <use_speaker_boost (True/False)>')
+        return
+    settings = VoiceSettings(
+        stability=float(stability),
+        similarity_boost=float(similarity_boost),
+        style=float(style),
+        use_speaker_boost=use_speaker_boost == 'True'
+    )
+    edit_voice_settings(voice_id, settings)
+    await update.effective_chat.send_message(f'Voice settings updated successfully!')
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     message_id = query.message.message_id
@@ -170,6 +188,7 @@ def main():
     application.add_handler(CommandHandler('setvoiceid', set_voice_id, block=False))
     application.add_handler(CommandHandler('start', start, block=False))
     application.add_handler(CommandHandler('chatid', chat_id, block=False))
+    application.add_handler(CommandHandler('editvoicesettings', edit_voice_settings_command, block=False))
     application.add_handler(CallbackQueryHandler(callback_query, block=False))
     application.run_polling()
 
