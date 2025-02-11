@@ -1,8 +1,10 @@
 from WPP_Whatsapp import Create
 import os, asyncio, random, pickle, logfire, requests
 from dotenv import load_dotenv
-
+from httpx import AsyncClient
 load_dotenv()
+
+my_phone_number = os.getenv('MY_PHONE_NUMBER')
 
 logfire.configure(
     send_to_logfire='if-token-present',
@@ -14,7 +16,7 @@ async def check_sendable_messages():
     return [
         {
             "type": message_data['type'],
-            "telephone": message_data['telephone'] if message_data['telephone'].startswith('34') else f'34{message_data["telephone"]}',
+            "telephone": message_data['telephone'],
             "message": message_data['message'],
             "filename": message_data['filename'],
             "audio_filename": message_data.get('audio_filename', None)
@@ -56,6 +58,7 @@ async def sendable_message_checker():
                                 nameOrOptions=message['audio_filename'].split('/')[-1],
                                 caption='audio'
                             )
+                            
                             logfire.info(f'Sent audio to {message["telephone"]}', result=result, _tags=['sent_audio'])
                             os.remove(f'sendable_messages/{message["filename"]}')
                             os.remove(message["audio_filename"])
@@ -64,6 +67,9 @@ async def sendable_message_checker():
                             print(e)
                             break
                     await asyncio.sleep(10+random.randint(1, 15))
+                    if message['type'] == 'audio':
+                        async with AsyncClient(timeout=120) as async_client:
+                            await async_client.post('http://localhost:47549/delete_sample', json={'telephone': my_phone_number, 'sample': result['id'].split('_')[-1]+'.mp3'})
                     try:
                         os.remove(f'sendable_messages/{message["filename"]}')
                     except Exception as e:

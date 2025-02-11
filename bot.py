@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import logging
 import random
 import pickle
-from utils import text_to_speech, edit_voice_settings
+from utils import text_to_speech, edit_voice_settings, delete_voice
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -114,6 +114,15 @@ async def edit_voice_settings_command(update: Update, context: ContextTypes.DEFA
     )
     edit_voice_settings(voice_id, settings)
     await update.effective_chat.send_message(f'Voice settings updated successfully!')
+
+async def delete_voice_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        voice_id = context.args[0]
+        delete_voice(voice_id)
+        await update.effective_chat.send_message(f'Voice deleted successfully!')
+    except:
+        await update.effective_chat.send_message(f'Usage: /deletevoice <voice_id>')
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     message_id = query.message.message_id

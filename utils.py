@@ -128,6 +128,11 @@ def edit_voice_settings(voice_id: str, request: VoiceSettings):
         request=request
     )
 
+def delete_voice(voice_id: str):
+    return elevenlabs_client.voices.delete(
+        voice_id=voice_id
+    )
+
 def get_voices():
     voices = elevenlabs_client.voices.get_all()
     return voices

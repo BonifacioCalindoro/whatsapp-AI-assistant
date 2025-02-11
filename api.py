@@ -78,6 +78,16 @@ async def complete_conversation(chat_id, from_message):
     )
     return response.choices[0].message.content
 
+@app.post('/delete_sample')
+async def delete_sample(data: dict):
+    global samples
+    telephone = data['telephone']
+    sample = data['sample']
+    samples[telephone] = [s for s in samples.get(telephone, []) if s != sample]
+    save_sample(telephone, samples[telephone])
+    os.remove(f'audios/{sample}')
+    return {"message": "Sample deleted", "error": False}
+
 @app.post('/complete')
 async def complete(data: dict):
     global conversations

@@ -62,6 +62,7 @@ OPENAI_API_KEY=your_openai_api_key
 ELEVENLABS_API_KEY=your_elevenlabs_api_key
 ELEVENLABS_VOICE_ID=your_elevenlabs_voice_id
 OPENAI_MODEL=your_openai_model (message format is adapted to o1-preview, if you want to use a non-o model, the first message role should be "system")
+MY_PHONE_NUMBER=your_phone_number (with the country code (but no +))
 ```
 
 ## Usage
