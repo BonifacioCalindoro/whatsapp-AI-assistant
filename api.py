@@ -21,8 +21,6 @@ openai = AsyncOpenAI(
 
 app = FastAPI()
 
-logfire.instrument_fastapi(app)
-
 if not os.path.exists('conversations'):
     os.makedirs('conversations')
 
