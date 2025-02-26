@@ -1,9 +1,15 @@
 from fastapi import FastAPI
-import uvicorn, pickle, os, logfire, json
-from openai import AsyncOpenAI
+import uvicorn, pickle, os, logfire
+from openai import AsyncOpenAI, RateLimitError
 from utils import convert_from_b64_and_transcribe, convert_opus_base64_to_mp3, clone_voice_from_samples, get_voices
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from dotenv import load_dotenv
+
+logfire.configure(
+    send_to_logfire='if-token-present',
+    service_name='api',
+    scrubbing=False
+)
 
 load_dotenv()
 
@@ -13,13 +19,9 @@ openai = AsyncOpenAI(
     api_key=os.getenv('OPENAI_API_KEY')
 )
 
-logfire.configure(
-    send_to_logfire='if-token-present',
-    service_name='api',
-    scrubbing=False
-)
-
 app = FastAPI()
+
+logfire.instrument_fastapi(app)
 
 if not os.path.exists('conversations'):
     os.makedirs('conversations')
@@ -72,10 +74,23 @@ def format_conversation(conversation, from_message):
 async def complete_conversation(chat_id, from_message):
     conversation = conversations[chat_id]
     formatted_conversation = format_conversation(conversation, from_message)
-    response = await openai.chat.completions.create(
-        model=os.getenv('OPENAI_MODEL'),
-        messages=formatted_conversation
-    )
+    try:
+        response = await openai.chat.completions.create(
+            model=os.getenv('OPENAI_MODEL'),
+            messages=formatted_conversation
+        )
+    except RateLimitError as e:
+            # Try again with only last 50 messages
+            truncated_conversation = formatted_conversation[:1] + formatted_conversation[-min(50, len(formatted_conversation)-1):]
+            try:
+                response = await openai.chat.completions.create(
+                    model=os.getenv('OPENAI_MODEL'),
+                    messages=truncated_conversation
+                )
+            except Exception as e2:
+                return {"message": str(e2), "error": True}
+    except Exception as e:
+        return {"message": str(e), "error": True}
     return response.choices[0].message.content
 
 @app.post('/delete_sample')
@@ -83,7 +98,7 @@ async def delete_sample(data: dict):
     global samples
     telephone = data['telephone']
     sample = data['sample']
-    samples[telephone] = [s for s in samples.get(telephone, []) if s != sample]
+    samples[telephone] = [s for s in samples.get(telephone, []) if s != f'audios/{sample}']
     save_sample(telephone, samples[telephone])
     os.remove(f'audios/{sample}')
     return {"message": "Sample deleted", "error": False}
