@@ -9,6 +9,7 @@ from utils import text_to_speech, edit_voice_settings, delete_voice
 
 logfire.configure(
     send_to_logfire='if-token-present',
+    token=os.getenv('LOGFIRE_TOKEN'),
     service_name='bot',
     scrubbing=False
 )

@@ -5,13 +5,16 @@ from utils import convert_from_b64_and_transcribe, convert_opus_base64_to_mp3, c
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from dotenv import load_dotenv
 
+
+load_dotenv()
+
 logfire.configure(
     send_to_logfire='if-token-present',
+    token=os.getenv('LOGFIRE_TOKEN'),
     service_name='api',
     scrubbing=False
 )
 
-load_dotenv()
 
 bot = Bot(os.getenv('TELEGRAM_BOT_TOKEN'))
 

@@ -7,17 +7,12 @@ load_dotenv()
 
 logfire.configure(
     send_to_logfire='if-token-present',
+    token=os.getenv('LOGFIRE_TOKEN'),
     service_name='whatsapp',
     scrubbing=False
 )
 
 my_phone_number = os.getenv('MY_PHONE_NUMBER')
-
-logfire.configure(
-    send_to_logfire='if-token-present',
-    service_name='whatsapp',
-    scrubbing=False
-)
 
 async def check_sendable_messages():
     try:
