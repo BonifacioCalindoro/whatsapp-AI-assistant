@@ -1,18 +1,11 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 from httpx import AsyncClient
-import os
 from elevenlabs.types import VoiceSettings
 from dotenv import load_dotenv
-import logging
-import random
-import pickle
-import logfire
+import random, os, pickle, logfire
+
 from utils import text_to_speech, edit_voice_settings, delete_voice
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 
 logfire.configure(
     send_to_logfire='if-token-present',
