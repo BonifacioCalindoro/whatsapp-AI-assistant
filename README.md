@@ -7,7 +7,9 @@ A WhatsApp bot that uses AI to help manage conversations by transcribing voice m
 - 🎙️ Voice message transcription using OpenAI's Whisper
 - 💬 AI-powered conversation completion
 - 🔊 Text-to-speech responses using ElevenLabs
+- 🗣️ Voice cloning and management capabilities
 - 🤖 Telegram bot integration for message management
+- 🔄 Audio format conversion between MP3, OGG, and Opus
 
 ## Prerequisites
 
@@ -17,7 +19,7 @@ A WhatsApp bot that uses AI to help manage conversations by transcribing voice m
   - OpenAI
   - ElevenLabs
   - Telegram Bot
-- WhatsApp account
+  - LogFire (optional, for logging)
 
 ## Installation
 
@@ -43,7 +45,7 @@ pip install -r requirements.txt
 ```
 
 4. Install ffmpeg:
-- Ubuntu/Debian: `sudo apt-get install ffmpeg`
+- Ubuntu/Debian: `sudo apt-get install ffmpeg libmp3lame0`
 - macOS: `brew install ffmpeg`
 - Windows: Download from the [official ffmpeg website](https://ffmpeg.org/download.html)
 
@@ -53,9 +55,12 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-```bash
-env
-LOGIFRE_TOKEN=your_logfire_token (optional)
+## Configuration
+
+Edit the `.env` file with your API keys and settings:
+
+```env
+LOGIFRE_TOKEN=your_logfire_token
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_telegram_chat_id (create a group, add the bot and get the chat id with the /chatid command)
 OPENAI_API_KEY=your_openai_api_key
@@ -67,7 +72,7 @@ MY_PHONE_NUMBER=your_phone_number (with the country code (but no +))
 
 ## Usage
 
-The application consists of three main components that need to be running (you can use the "screen" package to run them in the background):
+The application consists of three main components that need to be running (you can use the "screen" package to run some of them in the background):
 
 1. Start the API server:
 
@@ -88,7 +93,6 @@ and scan the QR code
 python bot.py
 ```
 
-
 ## How it Works
 
 1. When a WhatsApp message is received, it's processed by the WhatsApp client
@@ -98,13 +102,43 @@ python bot.py
    - Complete the conversation using AI
    - Send text responses
    - Generate and send voice responses using ElevenLabs
+   - Clone voices from audio samples
+   - Manage voice settings and profiles
+
+## Voice Management Features
+
+The assistant includes comprehensive voice management capabilities:
+- Clone voices from audio samples
+- Edit voice settings and profiles
+- List available voices
+- Delete voices
+- Customize voice parameters
 
 ## Project Structure
 
-- `api.py`: FastAPI server handling message processing and AI completions
-- `whatsapp.py`: WhatsApp client integration
-- `bot.py`: Telegram bot for message management
-- `utils.py`: Utility functions for audio processing and API interactions
+- `api.py`: FastAPI server handling message processing, AI completions, and voice management
+- `whatsapp.py`: WhatsApp client integration with message handling
+- `bot.py`: Telegram bot for message management and voice control
+- `utils.py`: Utility functions for audio processing, transcription, and voice synthesis
+
+Key functions:
+- Audio conversion between formats (MP3, OGG, Opus)
+- Voice transcription with OpenAI Whisper
+- Text-to-speech with ElevenLabs
+- Voice cloning and management
+- Conversation management and completion
+
+## Telegram Bot Commands
+
+The Telegram bot provides several commands for managing the assistant:
+- `/start` - Dummy command
+- `/clone` - Clone a voice from samples
+- `/voices` - List available voices
+- `/chatid` - Get your Telegram chat ID
+- `/setvoiceid` - Set the voice id you want to use for audio responses
+- `/editvoicesettings` - Edit the settings for the voice model
+- `/deletevoice` - Exactly what you think it does
+- Voice editing and management commands
 
 ## Limitations
 
@@ -123,7 +157,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - [WPP_Whatsapp](https://github.com/3mora2/WPP_Whatsapp) for WhatsApp Web integration
-- OpenAI for Whisper API
-- ElevenLabs for text-to-speech capabilities
+- OpenAI for Whisper API and language models
+- ElevenLabs for text-to-speech and voice cloning capabilities
 - python-telegram-bot for Telegram integration
 
