@@ -1,6 +1,6 @@
 # WhatsApp Assistant
 
-A WhatsApp bot that uses AI to help manage conversations by transcribing voice messages, completing conversations, and generating voice responses using OpenAI's Whisper and ElevenLabs.
+A WhatsApp bot that uses AI to help manage conversations by transcribing voice messages using OpenAI's Whisper, completing conversations using OpenAI's LLM models, and generating voice responses using ElevenLabs.
 
 ## Features
 
