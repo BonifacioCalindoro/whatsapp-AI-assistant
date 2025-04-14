@@ -58,7 +58,7 @@ async def clone(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             telephones = [tel.replace('.pkl', '') for tel in os.listdir('samples') if tel.endswith('.pkl')]
             keyboard = [InlineKeyboardButton(tel, callback_data=f'clone_choice_{tel}') for tel in telephones]
-            keyboard_rows = [keyboard[i:i+3] for i in range(0, len(keyboard), 3)]
+            keyboard_rows = [keyboard[i:i+4] for i in range(0, len(keyboard), 4)]
             reply_markup = InlineKeyboardMarkup(keyboard_rows)
             await update.message.reply_text("Choose a telephone to clone:", reply_markup=reply_markup)
             logfire.info("Clone command executed successfully")
